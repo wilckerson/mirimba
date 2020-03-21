@@ -8,8 +8,9 @@ namespace Mirimba.Api.Games.Uno
     public class PlayerState
     {
         public List<PublicPlayerState> PublicPlayersState { get; set; }
-        public List<Card> HandCards { get; set; }
+        public List<string> HandCards { get; set; }
         public int DeckCount { get; set; }
-        public List<Card> BoardCards { get; set; }
+        public List<string> BoardCards { get; set; }
+        public bool IsGameStarted { get; set; }
     }
 }

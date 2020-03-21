@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>Sala de jogo</h1>
+    <h1>Uno Mirimba - Sala de Jogo</h1>
     <!-- <small>{{roomId}}</small> -->
 
     <div v-if="!isConnected">
@@ -21,15 +21,31 @@
           {{item.message}}
         </li>
       </ul>-->
-      Jogadores:
-      <div v-for="(item, index) in state.publicPlayersState" :key="'publicPlayerState'+index">
-        <b>
-          <span>{{item.userName}}</span>
-          <span v-if="!item.isOnline" style="color:red"> [Offline]</span>
-        </b>
-        <div>Cartas na mão: {{item.handCardsCount}}</div>
+      <div>
+        Jogadores:
         <br/>
         <br/>
+        <div v-for="(item, index) in state.publicPlayersState" :key="'publicPlayerState'+index">
+          <b>
+            <span>{{item.userName}}</span>
+            <span v-if="!item.isOnline" style="color:red">[Offline]</span>
+          </b>
+          <div>Cartas na mão: {{item.handCardsCount}}</div>
+          <br />
+          <br />
+        </div>
+      </div>
+
+      <div v-if="!state.isGameStarted">
+        <button
+          :disabled="!canStartNewGame()"
+          @click.prevent="onClickStartNewGame()"
+        >Iniciar novo jogo</button>
+        <div v-if="!canStartNewGame()">É necessário no mínio dois jogadores.</div>
+      </div>
+      <div v-else>
+        <div>Baralho: {{state.deckCount}}</div>
+        <div>Mesa: {{state.boardCards}}</div>
       </div>
     </div>
   </div>
@@ -90,6 +106,9 @@ export default {
       this.loadingJoinRoom = false;
       this.isConnected = true;
     },
+    onClickStartNewGame() {
+      gameHub.startNewGame();
+    },
     onGameHubMessage(data) {
       this.messages.push(data);
     },
@@ -99,6 +118,9 @@ export default {
     },
     canJoinRoom() {
       return this.userName && !this.loadingJoinRoom;
+    },
+    canStartNewGame() {
+      return this.state.publicPlayersState.length > 1;
     }
   }
 };

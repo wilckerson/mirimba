@@ -11,7 +11,7 @@ namespace Mirimba.Api.Hubs
     {
         static Dictionary<string, UnoGame> gameRooms = new Dictionary<string, UnoGame>();
         static Dictionary<string, UnoGame> gameConnection = new Dictionary<string, UnoGame>();
-        
+
 
         public GameHub()
         {
@@ -29,6 +29,23 @@ namespace Mirimba.Api.Hubs
         //    await currentInstance.Clients.Group(roomId).SendAsync("Update", new PlayerState());
         //}
 
+        public async Task ProcessEvent(string roomId, string eventName, object[] eventArgs)
+        {
+            var game = gameRooms[roomId];
+
+            if(eventName == "startNewGame")
+            {
+                game.StartNewGame();
+            }           
+
+            await BroadcastUpdateToRoom(roomId, game);
+        }
+
+        private async Task BroadcastUpdateToRoom(string roomId, UnoGame game)
+        {
+            var playerState = game.GetPlayerState();
+            await Clients.Group(roomId).SendAsync("Update", playerState);
+        }
 
         public async Task JoinRoom(string roomId, string userName)
         {
@@ -46,9 +63,7 @@ namespace Mirimba.Api.Hubs
 
             game.AddPlayer(userName, Context.ConnectionId);
 
-            var playerState = game.GetPlayerState();
-
-            await Clients.Group(roomId).SendAsync("Update", playerState);
+            await BroadcastUpdateToRoom(roomId, game);
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
@@ -56,9 +71,7 @@ namespace Mirimba.Api.Hubs
             var game = gameConnection[Context.ConnectionId];
             game.SetOfflinePlayer(Context.ConnectionId);
 
-            var playerState = game.GetPlayerState();
-
-            Clients.Group(game.RoomId).SendAsync("Update", playerState).Wait();
+            BroadcastUpdateToRoom(game.RoomId, game).Wait();
 
             gameConnection.Remove(Context.ConnectionId);
 

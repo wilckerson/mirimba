@@ -32,9 +32,14 @@ const GameHub = function(hubUrl, onReceiveMessageFn, onUpdateFn) {
         connection.invoke("Send", currentRoomId, currentUserName, text);
     }
 
+    function startNewGame() {
+        connection.invoke("ProcessEvent", currentRoomId, "startNewGame", []);
+    }
+
     return {
         joinRoom: joinRoom,
-        sendMessage: sendMessage
+        sendMessage: sendMessage,
+        startNewGame: startNewGame
     };
 }
 
