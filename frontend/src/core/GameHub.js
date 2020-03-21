@@ -1,6 +1,6 @@
 import { HubConnectionBuilder } from "@aspnet/signalr";
 
-const GameHub = function(hubUrl, onReceiveMessageFn) {
+const GameHub = function(hubUrl, onReceiveMessageFn, onUpdateFn) {
 
     var connection = undefined;
     var currentUserName = undefined;
@@ -13,6 +13,7 @@ const GameHub = function(hubUrl, onReceiveMessageFn) {
             .build();
 
         connection.on("ReceiveMessage", onReceiveMessageFn);
+        connection.on("Update", onUpdateFn);
 
         await connection.start();
     }
@@ -24,7 +25,7 @@ const GameHub = function(hubUrl, onReceiveMessageFn) {
 
         await openConnection();
 
-        connection.invoke("JoinRoom", roomId);
+        connection.invoke("JoinRoom", roomId, userName);
     }
 
     function sendMessage(text) {

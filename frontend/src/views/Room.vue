@@ -5,17 +5,14 @@
 
     <div v-if="!isConnected">
       <div>Qual o seu nome?</div>
-      <input type="text" v-model="userName" />
+      <input type="text" v-model="userName" @keyup.enter="onClickJoinRoom()" />
       <br />
-      <button
-        :disabled="!userName || loadingJoinRoom"
-        @click.prevent="onClickJoinRoom()"
-      >Entrar na sala</button>
+      <button :disabled="!this.canJoinRoom()" @click.prevent="onClickJoinRoom()">Entrar na sala</button>
       <div v-if="loadingJoinRoom">Entrando...</div>
     </div>
 
     <div v-if="isConnected">
-      <input type="text" v-model="message" />
+      <!-- <input type="text" v-model="message" />
       <button @click="onClickSend()">Enviar</button>
 
       <ul>
@@ -23,7 +20,12 @@
           <b>{{item.user}}:</b>
           {{item.message}}
         </li>
-      </ul>
+      </ul>-->
+      Jogadores:
+      <div
+        v-for="(item, index) in state.publicPlayersState"
+        :key="'publicPlayerState'+index"
+      >{{item.userName}} (Cartas na mão: {{item.handCardsCount}} )</div>
     </div>
   </div>
 </template>
@@ -42,14 +44,26 @@ export default {
       roomId: undefined,
       userName: undefined,
       message: undefined,
-      messages: []
+      messages: [],
+      state: {
+        publicPlayersState: []
+      }
     };
   },
   async created() {
     this.roomId = this.$route.params.roomId;
 
-    gameHub = new GameHub(config.API_URL + "/gameHub", this.onGameHubMessage);
+    //Nome de usuário utilizado anteriormente
+    var lastUserName = window.localStorage.getItem("userName");
+    if (lastUserName) {
+      this.userName = lastUserName;
+    }
 
+    gameHub = new GameHub(
+      config.API_URL + "/gameHub",
+      this.onGameHubMessage,
+      this.onGameHubUpdate
+    );
   },
   methods: {
     onClickSend() {
@@ -57,7 +71,14 @@ export default {
       this.message = undefined;
     },
     async onClickJoinRoom() {
+      if (!this.canJoinRoom()) {
+        return;
+      }
+
       this.loadingJoinRoom = true;
+
+      //Salvando userName no localStorage
+      window.localStorage.setItem("userName", this.userName);
 
       await gameHub.joinRoom(this.roomId, this.userName);
 
@@ -66,6 +87,13 @@ export default {
     },
     onGameHubMessage(data) {
       this.messages.push(data);
+    },
+    onGameHubUpdate(data) {
+      console.log("Update", data);
+      this.state = data;
+    },
+    canJoinRoom() {
+      return this.userName && !this.loadingJoinRoom;
     }
   }
 };
