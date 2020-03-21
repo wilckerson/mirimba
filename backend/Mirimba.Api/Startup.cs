@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Mirimba.Api.Hubs;
 
 namespace Mirimba.Api
 {
@@ -26,14 +27,11 @@ namespace Mirimba.Api
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
+            services.AddSignalR();
+
             services.AddSpaStaticFiles(configuration =>
             {
                 configuration.RootPath = "wwwroot";
-            });
-
-            services.AddCors(options =>
-            {
-                options.AddPolicy("MyPolicy", builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
             });
         }
 
@@ -45,8 +43,17 @@ namespace Mirimba.Api
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseCors("MyPolicy");
+            app.UseCors(builder => builder
+               .AllowAnyHeader()
+               .AllowAnyMethod()
+               .SetIsOriginAllowed((host) => true)
+               .AllowCredentials()
+             );
 
+            app.UseSignalR(routes =>
+            {
+                routes.MapHub<GameHub>("/api/gameHub");
+            });
             app.UseMvc();
 
             app.UseSpaStaticFiles();
