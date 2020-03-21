@@ -1,59 +1,71 @@
 <template>
   <div>
-    <h1>Sala de jogo</h1>Nome:
-    <input type="text" v-model="userName" />
-    <br />
-    <input type="text" v-model="message" />
-    <button @click="onClickSend()">Enviar</button>
+    <h1>Sala de jogo</h1>
+    <!-- <small>{{roomId}}</small> -->
 
-    <ul>
-        <li v-for="(item, index) in messages" :key="'msg'+index"><b>{{item.user}}:</b> {{item.message}}</li>
-    </ul>
+    <div v-if="!isConnected">
+      <div>Qual o seu nome?</div>
+      <input type="text" v-model="userName" />
+      <br />
+      <button
+        :disabled="!userName || loadingJoinRoom"
+        @click.prevent="onClickJoinRoom()"
+      >Entrar na sala</button>
+      <div v-if="loadingJoinRoom">Entrando...</div>
+    </div>
+
+    <div v-if="isConnected">
+      <input type="text" v-model="message" />
+      <button @click="onClickSend()">Enviar</button>
+
+      <ul>
+        <li v-for="(item, index) in messages" :key="'msg'+index">
+          <b>{{item.user}}:</b>
+          {{item.message}}
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <script>
-import { HubConnectionBuilder } from "@aspnet/signalr";
-import axios from "axios";
-
+import GameHub from "../core/GameHub";
 import config from "../config";
 
-var connection = undefined;
+var gameHub = undefined;
 
 export default {
   data() {
     return {
+      isConnected: false,
+      loadingJoinRoom: false,
+      roomId: undefined,
       userName: undefined,
       message: undefined,
       messages: []
     };
   },
   async created() {
-    
+    this.roomId = this.$route.params.roomId;
 
-    var response = await axios.get(config.API_URL + "/values");
-    console.log("resp",response);
+    gameHub = new GameHub(config.API_URL + "/gameHub", this.onGameHubMessage);
 
-    connection = new HubConnectionBuilder()
-      .withUrl(config.API_URL + "/gameHub")
-      .build();
-
-    connection.on("ReceiveMessage", data => {
-      //console.log("received",data);
-      this.messages.push(data);
-    });
-
-    connection.start(); //.then(() => connection.invoke("send", "Hello"));
-    
   },
   methods: {
     onClickSend() {
-      if (!connection) {
-        return;
-      }
-
-      connection.invoke("Send", this.userName, this.message);
+      gameHub.sendMessage(this.message);
       this.message = undefined;
+    },
+    async onClickJoinRoom() {
+      this.loadingJoinRoom = true;
+
+      await gameHub.joinRoom(this.roomId, this.userName);
+
+      this.loadingJoinRoom = false;
+      this.isConnected = true;
+    },
+    onGameHubMessage(data) {
+      this.messages.push(data);
     }
   }
 };
