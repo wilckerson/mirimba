@@ -10,7 +10,8 @@ namespace Mirimba.Api.Hubs
     public class GameHub : Hub
     {
         static Dictionary<string, UnoGame> gameRooms = new Dictionary<string, UnoGame>();
-        static GameHub currentInstance;
+        static Dictionary<string, UnoGame> gameConnection = new Dictionary<string, UnoGame>();
+        
 
         public GameHub()
         {
@@ -36,19 +37,31 @@ namespace Mirimba.Api.Hubs
             if (!gameRooms.ContainsKey(roomId))
             {
                 //Add new
-                gameRooms.Add(roomId, new UnoGame());
+                gameRooms.Add(roomId, new UnoGame(roomId));
             }
 
             var game = gameRooms[roomId];
-            game.AddPlayer(userName);
 
-            var playerState = game.GetPlayerState(userName);
+            gameConnection[Context.ConnectionId] = game;
+
+            game.AddPlayer(userName, Context.ConnectionId);
+
+            var playerState = game.GetPlayerState();
 
             await Clients.Group(roomId).SendAsync("Update", playerState);
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
+            var game = gameConnection[Context.ConnectionId];
+            game.SetOfflinePlayer(Context.ConnectionId);
+
+            var playerState = game.GetPlayerState();
+
+            Clients.Group(game.RoomId).SendAsync("Update", playerState).Wait();
+
+            gameConnection.Remove(Context.ConnectionId);
+
             return base.OnDisconnectedAsync(exception);
         }
     }

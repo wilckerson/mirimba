@@ -22,10 +22,15 @@
         </li>
       </ul>-->
       Jogadores:
-      <div
-        v-for="(item, index) in state.publicPlayersState"
-        :key="'publicPlayerState'+index"
-      >{{item.userName}} (Cartas na mão: {{item.handCardsCount}} )</div>
+      <div v-for="(item, index) in state.publicPlayersState" :key="'publicPlayerState'+index">
+        <b>
+          <span>{{item.userName}}</span>
+          <span v-if="!item.isOnline" style="color:red"> [Offline]</span>
+        </b>
+        <div>Cartas na mão: {{item.handCardsCount}}</div>
+        <br/>
+        <br/>
+      </div>
     </div>
   </div>
 </template>

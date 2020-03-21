@@ -7,41 +7,62 @@ namespace Mirimba.Api.Games.Uno
 {
     public class UnoGame
     {
+        public string RoomId { get; private set; }
+
         private Dictionary<string, Player> players;
         //private Stack<Card> boardCards;
         //private Stack<Card> deck;
 
-        public UnoGame()
+        public UnoGame(string roomId)
         {
+            RoomId = roomId;
             players = new Dictionary<string, Player>();
             //boardCards = new Stack<Card>();
             //deck = new Stack<Card>();
         }
 
-        public void AddPlayer(string userName)
+        public void AddPlayer(string userName, string connectionId)
         {
-            if(!players.ContainsKey(userName))
+            Player currenPlayer = null;
+            if (players.ContainsKey(userName))
             {
-                var newPlayer = new Player(userName);
-                players.Add(userName, newPlayer);
+                currenPlayer = players[userName];
+            }
+            else
+            {
+                currenPlayer = new Player(userName, connectionId);
+                players.Add(userName, currenPlayer);
+            }
+
+            currenPlayer.SetOnline(connectionId);
+        }
+
+        public void SetOfflinePlayer(string connectionId)
+        {
+            var player = players.Select(s => s.Value).FirstOrDefault(p => p.LastConnectionId == connectionId);
+            if(player != null)
+            {
+                player.SetOffline();
             }
         }
 
-        public PlayerState GetPlayerState(string userName)
+        public PlayerState GetPlayerState()
         {
             var state = new PlayerState();
 
             //Other players
-            //var otherPlayers = players.Where(player => player.Key != userName);
-            state.PublicPlayersState = players.Select(player => new PublicPlayerState()
+            //var onlinePlayers = players.Select(s => s.Value).Where(player => player.IsOnline());
+            var allPlayers = players.Select(s => s.Value);
+            state.PublicPlayersState = allPlayers.Select(player => new PublicPlayerState()
             {
-                UserName = player.Key,
-                HandCardsCount = player.Value.GetHandCardsCount()
+                UserName = player.UserName,
+                HandCardsCount = player.GetHandCardsCount(),
+                IsOnline = player.IsOnline()
             }).ToList();
 
-            return state;            
+            return state;
         }
     }
 
-    
+
 }

@@ -9,5 +9,6 @@ namespace Mirimba.Api.Games.Uno
     {
         public string UserName { get; set; }
         public int HandCardsCount { get; set; }
+        public bool IsOnline { get; set; }
     }
 }
