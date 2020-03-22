@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -10,18 +11,16 @@ namespace Mirimba.Api.Games.Uno
         public string UserName { get; private set; }
         public string LastConnectionId { get; private set; }
         private List<Card> handCards;
-        private bool onlineState;
+        public ReadOnlyCollection<Card> HandCards => new ReadOnlyCollection<Card>(handCards);
 
+        private bool onlineState;
+        public bool IsOnline => this.onlineState == true;
+       
         public Player(string userName, string connectionId)
         {
             this.UserName = userName;
             this.LastConnectionId = connectionId;
             handCards = new List<Card>();
-        }
-
-        public int GetHandCardsCount()
-        {
-            return handCards.Count;
         }
 
         public void SetOnline(string connectionId)
@@ -30,14 +29,14 @@ namespace Mirimba.Api.Games.Uno
             this.onlineState = true;
         }
 
-        public bool IsOnline()
-        {
-            return this.onlineState == true;
-        }
-
         public void SetOffline()
         {
             this.onlineState = false;
+        }
+
+        public void AddToHandCards(Card card)
+        {
+            handCards.Add(card);
         }
     }
 }

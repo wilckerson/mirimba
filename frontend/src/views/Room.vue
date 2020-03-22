@@ -23,8 +23,8 @@
       </ul>-->
       <div>
         Jogadores:
-        <br/>
-        <br/>
+        <br />
+        <br />
         <div v-for="(item, index) in state.publicPlayersState" :key="'publicPlayerState'+index">
           <b>
             <span>{{item.userName}}</span>
@@ -44,8 +44,17 @@
         <div v-if="!canStartNewGame()">É necessário no mínio dois jogadores.</div>
       </div>
       <div v-else>
-        <div>Baralho: {{state.deckCount}}</div>
-        <div>Mesa: {{state.boardCards}}</div>
+        <div>
+            Baralho: {{state.deckCount}}
+            <button>Puxar carta pra mão</button>
+            </div>
+        <br/><br/>
+        <div>Mesa: <button class="card">{{state.boardCards[0]}}</button></div><br/><br/>
+        <div>Histórico: {{state.boardCards}}</div><br/><br/>
+        <div>
+          Cartas da mão:
+          <button v-for="(item, index) in state.handCards" :key="'handCard'+index" class="card">{{item}}</button>
+        </div>
       </div>
     </div>
   </div>
@@ -125,3 +134,9 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.card{
+    padding:20px;
+}
+</style>

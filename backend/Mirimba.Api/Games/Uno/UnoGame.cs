@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -7,12 +8,17 @@ namespace Mirimba.Api.Games.Uno
 {
     public class UnoGame
     {
+        const int NUM_CARDS_PER_PLAYER = 7;
+
         public string RoomId { get; private set; }
         public bool IsStarted { get; private set; }
+
+        public ReadOnlyCollection<Player> Players => new ReadOnlyCollection<Player>(players.Select(s => s.Value).ToList());
 
         private Dictionary<string, Player> players;
         private Stack<Card> boardCards;
         private Stack<Card> deck;
+
 
 
         public UnoGame(string roomId)
@@ -41,14 +47,14 @@ namespace Mirimba.Api.Games.Uno
 
         public void SetOfflinePlayer(string connectionId)
         {
-            var player = players.Select(s => s.Value).FirstOrDefault(p => p.LastConnectionId == connectionId);
+            var player = Players.FirstOrDefault(p => p.LastConnectionId == connectionId);
             if(player != null)
             {
                 player.SetOffline();
             }
         }
 
-        public PlayerState GetPlayerState()
+        public PlayerState GetPlayerState(Player currentPlayer)
         {
             var state = new PlayerState();
             state.IsGameStarted = IsStarted;
@@ -56,14 +62,18 @@ namespace Mirimba.Api.Games.Uno
             state.BoardCards = boardCards.Select(s => s.Description).ToList();
 
             //PublicPlayersState
-            var allPlayers = players.Select(s => s.Value);
-            state.PublicPlayersState = allPlayers.Select(player => new PublicPlayerState()
+            state.PublicPlayersState = Players.Select(player => new PublicPlayerState()
             {
                 UserName = player.UserName,
-                HandCardsCount = player.GetHandCardsCount(),
-                IsOnline = player.IsOnline(),
+                HandCardsCount = player.HandCards.Count,
+                IsOnline = player.IsOnline,
                 
             }).ToList();
+
+            if(currentPlayer != null)
+            {
+                state.HandCards = currentPlayer.HandCards.Select(s => s.Description).ToList();
+            }
 
             return state;
         }
@@ -77,8 +87,23 @@ namespace Mirimba.Api.Games.Uno
             boardCards = new Stack<Card>();
 
             FirstCardOfBoard();
+            InitialCardsToPlayers(NUM_CARDS_PER_PLAYER);
 
             IsStarted = true;
+        }
+
+        private void InitialCardsToPlayers(int countPerPlayer)
+        {
+            foreach (var player in Players)
+            {
+                for (int i = 0; i < countPerPlayer; i++)
+                {
+                    if(deck.Count == 0) { break; }
+
+                    var card = deck.Pop();
+                    player.AddToHandCards(card);
+                }               
+            }
         }
 
         private void FirstCardOfBoard()

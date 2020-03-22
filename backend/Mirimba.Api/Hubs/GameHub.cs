@@ -38,13 +38,20 @@ namespace Mirimba.Api.Hubs
                 game.StartNewGame();
             }           
 
-            await BroadcastUpdateToRoom(roomId, game);
+            await BroadcastUpdateToGamePlayers(game);
         }
 
-        private async Task BroadcastUpdateToRoom(string roomId, UnoGame game)
+        private async Task BroadcastUpdateToGamePlayers(UnoGame game)
         {
-            var playerState = game.GetPlayerState();
-            await Clients.Group(roomId).SendAsync("Update", playerState);
+            foreach (var player in game.Players)
+            {
+                var playerState = game.GetPlayerState(player);
+
+                await Clients.Client(player.LastConnectionId).SendAsync("Update", playerState);
+            }
+
+            //var playerState = game.GetPlayerState();
+            //await Clients.Group(roomId).SendAsync("Update", playerState);
         }
 
         public async Task JoinRoom(string roomId, string userName)
@@ -63,7 +70,7 @@ namespace Mirimba.Api.Hubs
 
             game.AddPlayer(userName, Context.ConnectionId);
 
-            await BroadcastUpdateToRoom(roomId, game);
+            await BroadcastUpdateToGamePlayers(game);
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
@@ -71,7 +78,7 @@ namespace Mirimba.Api.Hubs
             var game = gameConnection[Context.ConnectionId];
             game.SetOfflinePlayer(Context.ConnectionId);
 
-            BroadcastUpdateToRoom(game.RoomId, game).Wait();
+            BroadcastUpdateToGamePlayers(game).Wait();
 
             gameConnection.Remove(Context.ConnectionId);
 
