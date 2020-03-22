@@ -4,5 +4,5 @@ export default {
     API_URL: "http://localhost:53408/api"
 
     //Same Server
-    //API_URL: "/"
+    //API_URL: "/api"
 }

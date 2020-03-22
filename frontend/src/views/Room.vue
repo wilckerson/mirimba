@@ -27,33 +27,62 @@
         <br />
         <div v-for="(item, index) in state.publicPlayersState" :key="'publicPlayerState'+index">
           <b>
-            <span>{{item.userName}}</span>
+            <span :class="{'current-user': item.userName == userName}">{{item.userName}}</span>
             <span v-if="!item.isOnline" style="color:red">[Offline]</span>
           </b>
-          <div>Cartas na mão: {{item.handCardsCount}}</div>
+          <div v-if="state.isGameStarted">Cartas na mão: {{item.handCardsCount}}</div>
           <br />
           <br />
         </div>
       </div>
 
-      <div v-if="!state.isGameStarted">
+      <!-- <div v-if="!state.isGameStarted"> -->
+      <div>
         <button
           :disabled="!canStartNewGame()"
           @click.prevent="onClickStartNewGame()"
         >Iniciar novo jogo</button>
         <div v-if="!canStartNewGame()">É necessário no mínio dois jogadores.</div>
+        <br />
+        <br />
       </div>
-      <div v-else>
+      <div v-if="state.isGameStarted">
         <div>
-            Baralho: {{state.deckCount}}
-            <button @click="onClickGetFromDeck()" :disabled="state.deckCount == 0">Puxar carta pra mão</button>
-            </div>
-        <br/><br/>
-        <div>Mesa: <button class="card">{{state.boardCards[0]}}</button></div><br/><br/>
-        <div>Histórico: {{state.boardCards}}</div><br/><br/>
+          Baralho: {{state.deckCount}}
+          <button
+            @click.prevent="onClickGetFromDeck()"
+            :disabled="state.deckCount == 0"
+          >Puxar carta pra mão</button>
+        </div>
+        <br />
+        <br />
+        <div>
+          Mesa:
+          <button
+            class="card"
+            @click.prevent="onClickGetFromBoard()"
+            v-if="state.boardCards && state.boardCards.length > 0"
+          >{{state.boardCards[0]}}</button>
+        </div>
+        <br />
+        <br />
+        <div>
+          Histórico: {{state.boardCards}}
+          <button
+            @click.prevent="onClickClearHistory()"
+            :disabled="!(state.boardCards && state.boardCards.length > 1)"
+          >Retornar o histórico antigo para o baralho</button>
+        </div>
+        <br />
+        <br />
         <div>
           Cartas da mão:
-          <button v-for="(item, index) in state.handCards" :key="'handCard'+index" class="card">{{item}}</button>
+          <button
+            v-for="(item, index) in state.handCards"
+            :key="'handCard'+index"
+            class="card"
+            @click.prevent="onClickFromHandToBoard(item)"
+          >{{item}}</button>
         </div>
       </div>
     </div>
@@ -96,12 +125,11 @@ export default {
     );
   },
   methods: {
-      
     onGameHubMessage(data) {
       this.messages.push(data);
     },
     onGameHubUpdate(data) {
-      console.log("Update", data);
+      //console.log("Update", data);
       this.state = data;
     },
     canJoinRoom() {
@@ -133,16 +161,28 @@ export default {
     onClickStartNewGame() {
       gameHub.startNewGame();
     },
-    onClickGetFromDeck(){
-        gameHub.getFromDeckToPlayerHandCards();
+    onClickGetFromDeck() {
+      gameHub.getFromDeck();
     },
-    
+    onClickGetFromBoard() {
+      gameHub.getFromBoard();
+    },
+    onClickFromHandToBoard(card) {
+      gameHub.fromHandToBoard(card);
+    },
+    onClickClearHistory() {
+      gameHub.clearBoardPastHistory();
+    }
   }
 };
 </script>
 
 <style scoped>
-.card{
-    padding:20px;
+.card {
+  padding: 20px;
+}
+
+.current-user{
+    color:blue;
 }
 </style>

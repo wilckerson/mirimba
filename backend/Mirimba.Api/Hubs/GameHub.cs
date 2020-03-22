@@ -35,14 +35,28 @@ namespace Mirimba.Api.Hubs
 
             bool needUpdate = true;
 
-            if(eventName == "StartNewGame")
+            if (eventName == "StartNewGame")
             {
                 game.StartNewGame();
             }
-            else if(eventName == "GetFromDeckToPlayerHandCards")
+            else if (eventName == "GetFromDeck")
             {
                 needUpdate = game.GetFromDeckToPlayerHandCards(userName);
             }
+            else if (eventName == "GetFromBoard")
+            {
+                needUpdate = game.GetFromBoardToPlayerHandCards(userName);
+            }
+            else if (eventName == "ClearBoardPastHistory")
+            {
+                needUpdate = game.ClearBoardPastHistory();
+            }
+            else if (eventName == "FromHandToBoard")
+            {
+                var card = eventArgs.FirstOrDefault()?.ToString();
+                game.FromHandToBoard(userName, card);
+            }
+
 
             if (needUpdate)
             {
@@ -84,12 +98,14 @@ namespace Mirimba.Api.Hubs
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            var game = gameConnection[Context.ConnectionId];
-            game.SetOfflinePlayer(Context.ConnectionId);
+            if (gameConnection.TryGetValue(Context.ConnectionId, out UnoGame game))
+            {
+                game.SetOfflinePlayer(Context.ConnectionId);
 
-            BroadcastUpdateToGamePlayers(game).Wait();
+                BroadcastUpdateToGamePlayers(game).Wait();
 
-            gameConnection.Remove(Context.ConnectionId);
+                gameConnection.Remove(Context.ConnectionId);
+            }
 
             return base.OnDisconnectedAsync(exception);
         }

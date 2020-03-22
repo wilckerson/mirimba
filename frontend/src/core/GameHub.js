@@ -38,8 +38,17 @@ const GameHub = function(hubUrl, onReceiveMessageFn, onUpdateFn) {
         startNewGame() {
             connection.invoke("ProcessEvent", currentRoomId, currentUserName, "StartNewGame", []);
         },
-        getFromDeckToPlayerHandCards() {
-            connection.invoke("ProcessEvent", currentRoomId, currentUserName, "GetFromDeckToPlayerHandCards", []);
+        getFromDeck() {
+            connection.invoke("ProcessEvent", currentRoomId, currentUserName, "GetFromDeck", []);
+        },
+        getFromBoard() {
+            connection.invoke("ProcessEvent", currentRoomId, currentUserName, "GetFromBoard", []);
+        },
+        fromHandToBoard(card) {
+            connection.invoke("ProcessEvent", currentRoomId, currentUserName, "FromHandToBoard", [card]);
+        },
+        clearBoardPastHistory() {
+            connection.invoke("ProcessEvent", currentRoomId, currentUserName, "ClearBoardPastHistory", []);
         }
     };
 }

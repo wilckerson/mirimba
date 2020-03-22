@@ -17,7 +17,7 @@ namespace Mirimba.Api.Games.Uno
 
         private Dictionary<string, Player> players;
         private Stack<Card> boardCards;
-        private Stack<Card> deck;
+        private LinkedList<Card> deck;
 
 
 
@@ -26,7 +26,7 @@ namespace Mirimba.Api.Games.Uno
             RoomId = roomId;
             players = new Dictionary<string, Player>();
             boardCards = new Stack<Card>();
-            deck = new Stack<Card>();
+            deck = new LinkedList<Card>();
         }
 
         public void AddPlayer(string userName, string connectionId)
@@ -54,6 +54,8 @@ namespace Mirimba.Api.Games.Uno
             }
         }
 
+      
+
         public PlayerState GetPlayerState(Player currentPlayer)
         {
             var state = new PlayerState();
@@ -78,12 +80,24 @@ namespace Mirimba.Api.Games.Uno
             return state;
         }
 
+        public void FromHandToBoard(string userName, string cardName)
+        {
+            if (players.TryGetValue(userName, out Player player))
+            {
+                var card = player.PopFromHandCards(cardName);
+                if(card != null)
+                {
+                    boardCards.Push(card);
+                }
+            }
+        }
+
         public void StartNewGame()
         {
             //Pega o baralho e embaralha
             var cards = GetDeckSet();
-            cards = SuffleCards(cards);
-            deck = new Stack<Card>(cards);
+            cards = ShuffleCards(cards);
+            deck = new LinkedList<Card>(cards);
             boardCards = new Stack<Card>();
 
             FirstCardOfBoard();
@@ -96,6 +110,7 @@ namespace Mirimba.Api.Games.Uno
         {
             foreach (var player in Players)
             {
+                player.ResetHandCards();
                 for (int i = 0; i < countPerPlayer; i++)
                 {
                     var result = GetFromDeckToPlayerHandCards(player);
@@ -113,7 +128,9 @@ namespace Mirimba.Api.Games.Uno
             //Não pode ser uma carta especial
             while(deck.Count > 0)
             {
-                var card = deck.Pop();
+                var card = deck.First.Value;
+                deck.RemoveFirst();
+
                 boardCards.Push(card);
 
                 if (card.IsSpecial == false)
@@ -136,14 +153,59 @@ namespace Mirimba.Api.Games.Uno
         {
             if (deck.Count == 0) { return false; }
 
-            var card = deck.Pop();
+            var card = deck.First.Value;
+            deck.RemoveFirst();
             player.AddToHandCards(card);
 
             return true;
         }
 
-        private List<Card> SuffleCards(List<Card> cards)
+        public bool GetFromBoardToPlayerHandCards(string userName)
         {
+            if (players.TryGetValue(userName, out Player player))
+            {
+                return GetFromBoardToPlayerHandCards(player);
+            }
+            return false;
+        }
+
+        public bool GetFromBoardToPlayerHandCards(Player player)
+        {
+            if (boardCards.Count == 0) { return false; }
+
+            var card = boardCards.Pop();
+            player.AddToHandCards(card);
+
+            return true;
+        }
+
+        public bool ClearBoardPastHistory()
+        {
+            //Pega as cartas da mesa (exceto a que está no topo da pilha) e devolve para o Deck de forma embaralhada
+            if(boardCards.Count < 2) { return false; }
+
+            var lstBoardCards = boardCards.ToList();
+            var topCard = lstBoardCards[0];
+            lstBoardCards.RemoveAt(0);
+            boardCards.Clear();
+            boardCards.Push(topCard);
+
+            lstBoardCards = ShuffleCards(lstBoardCards);
+
+            foreach (var card in lstBoardCards) {
+                deck.AddLast(card);
+            }
+
+            return true;
+        }
+
+        private List<Card> ShuffleCards(List<Card> cards)
+        {
+            if(cards.Count < 2)
+            {
+                return cards;
+            }
+
             var shuffledCards = cards
                 .OrderBy(a => Guid.NewGuid())
                 .ToList();

@@ -38,5 +38,23 @@ namespace Mirimba.Api.Games.Uno
         {
             handCards.Add(card);
         }
+
+        public Card PopFromHandCards(string cardName)
+        {
+            var idx = handCards.FindIndex(card => card.Description == cardName);
+            if(idx >= 0)
+            {
+                var card = handCards[idx];
+                handCards.RemoveAt(idx);
+                return card;
+            }
+
+            return null;
+        }
+
+        public void ResetHandCards()
+        {
+            handCards = new List<Card>();
+        }
     }
 }
