@@ -28,18 +28,19 @@ const GameHub = function(hubUrl, onReceiveMessageFn, onUpdateFn) {
         connection.invoke("JoinRoom", roomId, userName);
     }
 
-    function sendMessage(text) {
-        connection.invoke("Send", currentRoomId, currentUserName, text);
-    }
-
-    function startNewGame() {
-        connection.invoke("ProcessEvent", currentRoomId, "startNewGame", []);
-    }
 
     return {
         joinRoom: joinRoom,
-        sendMessage: sendMessage,
-        startNewGame: startNewGame
+
+        sendMessage(text) {
+            connection.invoke("Send", currentRoomId, currentUserName, text);
+        },
+        startNewGame() {
+            connection.invoke("ProcessEvent", currentRoomId, currentUserName, "StartNewGame", []);
+        },
+        getFromDeckToPlayerHandCards() {
+            connection.invoke("ProcessEvent", currentRoomId, currentUserName, "GetFromDeckToPlayerHandCards", []);
+        }
     };
 }
 

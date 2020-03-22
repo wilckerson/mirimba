@@ -98,10 +98,11 @@ namespace Mirimba.Api.Games.Uno
             {
                 for (int i = 0; i < countPerPlayer; i++)
                 {
-                    if(deck.Count == 0) { break; }
-
-                    var card = deck.Pop();
-                    player.AddToHandCards(card);
+                    var result = GetFromDeckToPlayerHandCards(player);
+                    if(result == false)
+                    {
+                        break;
+                    }
                 }               
             }
         }
@@ -120,6 +121,25 @@ namespace Mirimba.Api.Games.Uno
                     break;
                 }
             }
+        }
+
+        public bool GetFromDeckToPlayerHandCards(string userName)
+        {
+            if(players.TryGetValue(userName, out Player player))
+            {
+                return GetFromDeckToPlayerHandCards(player);
+            }
+            return false;
+        }
+
+        public bool GetFromDeckToPlayerHandCards(Player player)
+        {
+            if (deck.Count == 0) { return false; }
+
+            var card = deck.Pop();
+            player.AddToHandCards(card);
+
+            return true;
         }
 
         private List<Card> SuffleCards(List<Card> cards)

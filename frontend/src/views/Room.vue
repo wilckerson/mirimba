@@ -46,7 +46,7 @@
       <div v-else>
         <div>
             Baralho: {{state.deckCount}}
-            <button>Puxar carta pra mão</button>
+            <button @click="onClickGetFromDeck()" :disabled="state.deckCount == 0">Puxar carta pra mão</button>
             </div>
         <br/><br/>
         <div>Mesa: <button class="card">{{state.boardCards[0]}}</button></div><br/><br/>
@@ -96,6 +96,21 @@ export default {
     );
   },
   methods: {
+      
+    onGameHubMessage(data) {
+      this.messages.push(data);
+    },
+    onGameHubUpdate(data) {
+      console.log("Update", data);
+      this.state = data;
+    },
+    canJoinRoom() {
+      return this.userName && !this.loadingJoinRoom;
+    },
+    canStartNewGame() {
+      return this.state.publicPlayersState.length > 1;
+    },
+
     onClickSend() {
       gameHub.sendMessage(this.message);
       this.message = undefined;
@@ -118,19 +133,10 @@ export default {
     onClickStartNewGame() {
       gameHub.startNewGame();
     },
-    onGameHubMessage(data) {
-      this.messages.push(data);
+    onClickGetFromDeck(){
+        gameHub.getFromDeckToPlayerHandCards();
     },
-    onGameHubUpdate(data) {
-      console.log("Update", data);
-      this.state = data;
-    },
-    canJoinRoom() {
-      return this.userName && !this.loadingJoinRoom;
-    },
-    canStartNewGame() {
-      return this.state.publicPlayersState.length > 1;
-    }
+    
   }
 };
 </script>

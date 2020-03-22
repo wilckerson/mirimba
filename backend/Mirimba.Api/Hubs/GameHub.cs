@@ -29,16 +29,25 @@ namespace Mirimba.Api.Hubs
         //    await currentInstance.Clients.Group(roomId).SendAsync("Update", new PlayerState());
         //}
 
-        public async Task ProcessEvent(string roomId, string eventName, object[] eventArgs)
+        public async Task ProcessEvent(string roomId, string userName, string eventName, object[] eventArgs)
         {
             var game = gameRooms[roomId];
 
-            if(eventName == "startNewGame")
+            bool needUpdate = true;
+
+            if(eventName == "StartNewGame")
             {
                 game.StartNewGame();
-            }           
+            }
+            else if(eventName == "GetFromDeckToPlayerHandCards")
+            {
+                needUpdate = game.GetFromDeckToPlayerHandCards(userName);
+            }
 
-            await BroadcastUpdateToGamePlayers(game);
+            if (needUpdate)
+            {
+                await BroadcastUpdateToGamePlayers(game);
+            }
         }
 
         private async Task BroadcastUpdateToGamePlayers(UnoGame game)
