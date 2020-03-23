@@ -208,7 +208,7 @@ export default {
       gameHub.clearBoardPastHistory();
     },
     onClickBoardCard(item, index) {
-      console.log("c", item, index);
+      //console.log("c", item, index);
 
       if (index > 1) {
         this.onClickClearHistory();
