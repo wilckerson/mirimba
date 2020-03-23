@@ -13,11 +13,11 @@ namespace Mirimba.Api.Games.Uno
             get
             {
                 return
-                    Description.Contains("+2")
-                    || Description.Contains("+4")
-                    || Description.Contains("Inverter")
-                    || Description.Contains("MudarCor")
-                    || Description.Contains("Pular");
+                    Description.Contains("block")
+                    || Description.Contains("reverse")
+                    || Description.Contains("plus2")
+                    || Description.Contains("change-color")
+                    || Description.Contains("plus4");
             }
         }
 

@@ -1,7 +1,7 @@
 <template>
   <div class="game-room">
-    <div class="board-container">
       <h4 class="pt-3">Uno Mirimba - Sala de Jogo</h4>
+    <div class="board-container">
 
       <div class="player player-1">
         <div class="player-handcard-container">
@@ -186,7 +186,7 @@
 
 .board-container {
   /* height: 61.8033%; */
-  height: 70%;
+  height: 65%;
   /* border: 1px solid red; */
 }
 
