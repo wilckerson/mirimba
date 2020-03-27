@@ -12,5 +12,7 @@ namespace Mirimba.Api.Games.Uno
         public int DeckCount { get; set; }
         public List<string> BoardCards { get; set; }
         public bool IsGameStarted { get; set; }
+        public string LastPlayerToPlay { get; set; }
+        public int? LastPlayerAction { get; internal set; }
     }
 }

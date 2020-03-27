@@ -1,10 +1,9 @@
 <template>
   <div class="game-room">
-   
     <!-- <small>{{roomId}}</small> -->
 
     <div v-if="!isConnected">
-       <h4 class="pt-3">Uno Mirimba - Sala de Jogo</h4>
+      <h4 class="pt-3">Uno Mirimba - Sala de Jogo</h4>
 
       <div class="mt-5">Qual o seu nome?</div>
       <input
@@ -23,9 +22,7 @@
     </div>
 
     <div v-if="isConnected && !state.isGameStarted">
-       <h4 class="pt-3">Uno Mirimba - Sala de Jogo</h4>
-
-      Jogadores:
+      <h4 class="pt-3">Uno Mirimba - Sala de Jogo</h4>Jogadores:
       <br />
       <br />
       <div v-for="(item, index) in state.publicPlayersState" :key="'publicPlayerState'+index">
@@ -37,32 +34,28 @@
         <br />
       </div>
 
-       <div>
+      <div>
         <button
           :disabled="!canStartNewGame()"
           @click.prevent="onClickStartNewGame()"
           class="btn btn-success mt-3"
         >Iniciar novo jogo</button>
-        <div v-if="!canStartNewGame()" class="mt-2">É necessário no mínio dois jogadores.</div>
-        <br />
-        <br />
+        <div v-if="!canStartNewGame()" class="mt-2">É necessário no mínio dois jogadores.</div>       
       </div>
     </div>
 
-    
-
     <div v-if="isConnected && state.isGameStarted" style="height:100%;">
-      <div class="row">
+      <div class="row no-gutters">
         <div class="col">
-            <h4 class="pt-3">Uno Mirimba </h4>
+          <h4 class="pt-3">Uno Mirimba</h4>
         </div>
         <div class="col">
-           <button
-          :disabled="!canStartNewGame()"
-          @click.prevent="onClickStartNewGame()"
-          class="btn btn-success mt-3"
-        >Iniciar novo jogo</button>
-        <div v-if="!canStartNewGame()" class="mt-2">É necessário no mínio dois jogadores.</div>
+          <button
+           
+            @click.prevent="onClickStartNewGame()"
+            class="btn btn-success mt-3"
+          >Iniciar novo jogo</button>
+          <!-- <div v-if="!canStartNewGame()" class="mt-2">É necessário no mínio dois jogadores.</div> -->
         </div>
       </div>
       <div class="board-container">
@@ -77,7 +70,18 @@
           </div>
           <div class="player-name">
             <span :class="{'current-user': item.userName == userName}">{{item.userName}}</span>
-            <span v-if="!item.isOnline" class="text-danger">[Offline]</span>
+            <div v-if="!item.isOnline" class="text-danger">[Offline]</div>
+            <!-- Player Actions -->
+            <div
+              v-if="item.userName == state.lastPlayerToPlay && state.lastPlayerAction == config.PLAYER_ACTIONS.FromHandToBoard"
+            >
+              <div class="badge badge-pill badge-warning">Joguei</div>
+            </div>
+            <div
+              v-if="item.userName == state.lastPlayerToPlay && state.lastPlayerAction == config.PLAYER_ACTIONS.GetFromDeck"
+            >
+              <div class="badge badge-pill badge-info">Comprei</div>
+            </div>
           </div>
         </div>
 
@@ -116,12 +120,14 @@
 <script>
 import GameHub from "../core/GameHub";
 import config from "../config";
+// import "animate.css";
 
 var gameHub = undefined;
 
 export default {
   data() {
     return {
+      config,
       isConnected: false,
       loadingJoinRoom: false,
       roomId: undefined,
@@ -229,7 +235,7 @@ export default {
     rgba(53, 109, 51, 1) 0%,
     rgba(39, 71, 38, 1) 100%
   );
-  height: 100%;
+  height: 100vh;
   color: white;
 }
 
@@ -248,7 +254,7 @@ export default {
 
 .board-container {
   /* height: 61.8033%; */
-  height: 65%;
+  height: 60%;
   /* border: 1px solid red; */
 }
 
@@ -283,57 +289,48 @@ export default {
   margin-left: auto;
 }
 
-.boardcard-stack {
-  /* margin-top: 36vh; */
-  text-align: center;
-  position: absolute;
-  top: 40%;
-  width: 100%;
-  /* background-color: yellow; */
-}
-
 .boardcard-1 {
   position: absolute;
-  top: 38%;
-  width: 100%;
+  top: 40%;
+  width: 98%;
   transform: rotateZ(5deg);
 }
 
 .boardcard-2 {
   position: absolute;
-  top: 37%;
+  top: 39%;
   width: 100%;
   transform: rotateZ(-37deg);
   margin-left: -6px;
 }
 .boardcard-3 {
   position: absolute;
-  top: 35%;
+  top: 37%;
   width: 100%;
   transform: rotateZ(41deg);
 }
 .boardcard-4 {
   position: absolute;
-  top: 33.5%;
-  width: 100%;
+  top: 35.5%;
+  width: 98%;
   transform: rotateZ(-13deg);
 }
 .boardcard-5 {
   position: absolute;
-  top: 30%;
+  top: 32%;
   width: 100%;
   transform: rotateZ(43deg);
 }
 .boardcard-6 {
   position: absolute;
-  top: 29%;
-  width: 100%;
+  top: 31%;
+  width: 98%;
   transform: rotateZ(-8deg);
 }
 .boardcard-7 {
   position: absolute;
-  top: 27%;
-  width: 100%;
+  top: 29%;
+  width: 98%;
   transform: rotateZ(20deg);
 }
 
@@ -342,6 +339,10 @@ export default {
 
   /* background-color: red; */
 }
+.player-name{
+  line-height: 20px;
+}
+
 .player-handcard-container {
   position: relative;
 }

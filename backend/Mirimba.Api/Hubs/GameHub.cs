@@ -41,7 +41,7 @@ namespace Mirimba.Api.Hubs
             }
             else if (eventName == "GetFromDeck")
             {
-                needUpdate = game.GetFromDeckToPlayerHandCards(userName);
+                needUpdate = game.GetFromDeckToPlayerHandCards(userName, true);
             }
             else if (eventName == "GetFromBoard")
             {

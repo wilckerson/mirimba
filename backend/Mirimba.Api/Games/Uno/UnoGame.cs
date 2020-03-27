@@ -13,7 +13,10 @@ namespace Mirimba.Api.Games.Uno
         public string RoomId { get; private set; }
         public bool IsStarted { get; private set; }
 
-        public ReadOnlyCollection<Player> Players => new ReadOnlyCollection<Player>(players.Select(s => s.Value).ToList());
+        public ReadOnlyCollection<Player> Players => new ReadOnlyCollection<Player>(players.Select(s => s.Value).Where(w => w.IsOnline).ToList());
+
+        public Player LastPlayerToPlay { get; private set; }
+        public PlayerActionEnum? LastPlayerAction { get; private set; }
 
         private Dictionary<string, Player> players;
         private Stack<Card> boardCards;
@@ -48,17 +51,19 @@ namespace Mirimba.Api.Games.Uno
         public void SetOfflinePlayer(string connectionId)
         {
             var player = Players.FirstOrDefault(p => p.LastConnectionId == connectionId);
-            if(player != null)
+            if (player != null)
             {
                 player.SetOffline();
             }
         }
 
-      
+
 
         public PlayerState GetPlayerState(Player currentPlayer)
         {
             var state = new PlayerState();
+            state.LastPlayerToPlay = LastPlayerToPlay?.UserName;
+            state.LastPlayerAction = LastPlayerAction.HasValue ? (int)LastPlayerAction : new int?();
             state.IsGameStarted = IsStarted;
             state.DeckCount = deck.Count;
             state.BoardCards = boardCards.Select(s => s.Description).ToList();
@@ -69,10 +74,10 @@ namespace Mirimba.Api.Games.Uno
                 UserName = player.UserName,
                 HandCardsCount = player.HandCards.Count,
                 IsOnline = player.IsOnline,
-                
+
             }).ToList();
 
-            if(currentPlayer != null)
+            if (currentPlayer != null)
             {
                 state.HandCards = currentPlayer.HandCards.Select(s => s.Description).ToList();
             }
@@ -85,9 +90,11 @@ namespace Mirimba.Api.Games.Uno
             if (players.TryGetValue(userName, out Player player))
             {
                 var card = player.PopFromHandCards(cardName);
-                if(card != null)
+                if (card != null)
                 {
                     boardCards.Push(card);
+                    LastPlayerToPlay = player;
+                    LastPlayerAction = PlayerActionEnum.FromHandToBoard;
                 }
             }
         }
@@ -99,6 +106,11 @@ namespace Mirimba.Api.Games.Uno
             cards = ShuffleCards(cards);
             deck = new LinkedList<Card>(cards);
             boardCards = new Stack<Card>();
+            LastPlayerToPlay = null;
+            LastPlayerAction = null;
+
+            //Embaralha a ordem dos jogadores
+            ShufflePlayers();
 
             FirstCardOfBoard();
             InitialCardsToPlayers(NUM_CARDS_PER_PLAYER);
@@ -113,12 +125,12 @@ namespace Mirimba.Api.Games.Uno
                 player.ResetHandCards();
                 for (int i = 0; i < countPerPlayer; i++)
                 {
-                    var result = GetFromDeckToPlayerHandCards(player);
-                    if(result == false)
+                    var result = GetFromDeckToPlayerHandCards(player, false);
+                    if (result == false)
                     {
                         break;
                     }
-                }               
+                }
             }
         }
 
@@ -126,7 +138,7 @@ namespace Mirimba.Api.Games.Uno
         {
             //Pega a primeira carta do baralho e coloca na mesa
             //Não pode ser uma carta especial
-            while(deck.Count > 0)
+            while (deck.Count > 0)
             {
                 var card = deck.First.Value;
                 deck.RemoveFirst();
@@ -140,22 +152,28 @@ namespace Mirimba.Api.Games.Uno
             }
         }
 
-        public bool GetFromDeckToPlayerHandCards(string userName)
+        public bool GetFromDeckToPlayerHandCards(string userName, bool registerLastPlay)
         {
-            if(players.TryGetValue(userName, out Player player))
+            if (players.TryGetValue(userName, out Player player))
             {
-                return GetFromDeckToPlayerHandCards(player);
+                return GetFromDeckToPlayerHandCards(player, registerLastPlay);
             }
             return false;
         }
 
-        public bool GetFromDeckToPlayerHandCards(Player player)
+        public bool GetFromDeckToPlayerHandCards(Player player, bool registerLastPlay)
         {
             if (deck.Count == 0) { return false; }
 
             var card = deck.First.Value;
             deck.RemoveFirst();
             player.AddToHandCards(card);
+
+            if (registerLastPlay)
+            {
+                LastPlayerToPlay = player;
+                LastPlayerAction = PlayerActionEnum.GetFromDeck;
+            }
 
             return true;
         }
@@ -182,7 +200,7 @@ namespace Mirimba.Api.Games.Uno
         public bool ClearBoardPastHistory()
         {
             //Pega as cartas da mesa (exceto a que está no topo da pilha) e devolve para o Deck de forma embaralhada
-            if(boardCards.Count < 2) { return false; }
+            if (boardCards.Count < 2) { return false; }
 
             var lstBoardCards = boardCards.ToList();
             var topCard = lstBoardCards[0];
@@ -192,7 +210,8 @@ namespace Mirimba.Api.Games.Uno
 
             lstBoardCards = ShuffleCards(lstBoardCards);
 
-            foreach (var card in lstBoardCards) {
+            foreach (var card in lstBoardCards)
+            {
                 deck.AddLast(card);
             }
 
@@ -201,7 +220,7 @@ namespace Mirimba.Api.Games.Uno
 
         private List<Card> ShuffleCards(List<Card> cards)
         {
-            if(cards.Count < 2)
+            if (cards.Count < 2)
             {
                 return cards;
             }
@@ -211,6 +230,19 @@ namespace Mirimba.Api.Games.Uno
                 .ToList();
 
             return shuffledCards;
+        }
+
+        private void ShufflePlayers()
+        {
+            var shuffledPlayers = Players
+                .OrderBy(a => Guid.NewGuid())
+                .ToList();
+
+            this.players.Clear();
+            foreach (var player in shuffledPlayers)
+            {
+                this.players.Add(player.UserName, player);
+            }
         }
 
         private List<Card> GetDeckSet()
